@@ -17,6 +17,11 @@ import random
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from scripts.data.data_generator import ElectricalDataGenerator
+
 @dataclass
 class MinimalConfig:
     """Configuration for minimal model"""
@@ -541,7 +546,6 @@ class MinimalActionModel:
         
         if use_realistic_data:
             # Use the advanced data generator
-            from .data_generator import ElectricalDataGenerator
             
             generator = ElectricalDataGenerator()
             realistic_dataset = generator.generate_training_dataset(num_examples)

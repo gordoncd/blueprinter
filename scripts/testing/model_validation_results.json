@@ -1,0 +1,640 @@
+{
+  "total_tests": 9,
+  "syntax_valid": 9,
+  "semantic_valid": 0,
+  "intent_aligned": 0,
+  "detailed_results": [
+    {
+      "test_id": 1,
+      "intent": {
+        "from_kv": 69,
+        "to_kv": 13.8,
+        "rating_mva": 50,
+        "scheme_hv": "single_bus",
+        "lv_feeders": 4,
+        "protection": "standard",
+        "description": "69kV distribution substation"
+      },
+      "philosophy": "conservative",
+      "sequence": [
+        "ADD_BUS",
+        "4.16KV",
+        "HV",
+        "MAIN",
+        "BUS_112",
+        "ADD_TRANSFORMER",
+        "TWO_WINDING",
+        "4.16KV",
+        "138KV",
+        "150MVA",
+        "TX_201",
+        "CONNECT_TX_LV",
+        "TX_203",
+        "BUS_113"
+      ],
+      "sequence_length": 14,
+      "syntax_valid": true,
+      "semantic_valid": false,
+      "execution_successful": false,
+      "issues": [
+        "Connection references non-existent transformer: TX_203",
+        "Connection references non-existent bus: BUS_113",
+        "Substation must have at least 2 buses (HV and LV)",
+        "Substation must have at least 1 bay",
+        "Transformer must be connected to both HV and LV buses"
+      ],
+      "alignment": {
+        "hv_voltage_exact": false,
+        "lv_voltage_exact": false,
+        "voltage_match": false,
+        "capacity_match": true,
+        "feeder_count_exact": false,
+        "feeder_count_reasonable": false,
+        "protection_appropriate": false,
+        "scheme_match": true,
+        "overall_score": 0.3333333333333333,
+        "issues": [
+          "Missing HV voltage 69KV, found: ['4.16KV', '4.16KV', '138KV']",
+          "Missing LV voltage 13.8KV, found: ['4.16KV', '4.16KV', '138KV']",
+          "Feeder count mismatch: expected 4, got 0",
+          "Standard protection should include breakers"
+        ]
+      },
+      "final_state": {
+        "buses": 1,
+        "transformers": 1,
+        "bays": 0,
+        "connections": 1
+      },
+      "sequence_preview": "ADD_BUS 4.16KV HV MAIN BUS_112 ADD_TRANSFORMER TWO_WINDING 4.16KV 138KV 150MVA TX_201 CONNECT_TX_LV TX_203 BUS_113"
+    },
+    {
+      "test_id": 3,
+      "intent": {
+        "from_kv": 25,
+        "to_kv": 4.16,
+        "rating_mva": 25,
+        "scheme_hv": "single_bus",
+        "lv_feeders": 8,
+        "protection": "standard",
+        "description": "Industrial plant substation"
+      },
+      "philosophy": "conservative",
+      "sequence": [
+        "CONNECT_TX_LV",
+        "TX_203",
+        "BUS_117",
+        "ADD_TRANSFORMER",
+        "TWO_WINDING",
+        "66KV",
+        "115KV",
+        "300MVA",
+        "TX_207",
+        "ADD_BUS",
+        "25KV",
+        "LV",
+        "MAIN",
+        "BUS_103",
+        "CONNECT_TX_LV",
+        "TX_204",
+        "BUS_117",
+        "ADD_BUS",
+        "13.8KV",
+        "HV",
+        "MAIN",
+        "BUS_101",
+        "ADD_TRANSFORMER",
+        "TWO_WINDING",
+        "138KV",
+        "34.5KV",
+        "100MVA",
+        "TX_203",
+        "ADD_TRANSFORMER",
+        "TWO_WINDING",
+        "69KV",
+        "220KV",
+        "50MVA",
+        "TX_208",
+        "APPEND_STEP",
+        "BAY_337",
+        "BREAKER",
+        "CONNECT_BUS",
+        "BUS_115",
+        "BAY_305"
+      ],
+      "sequence_length": 40,
+      "syntax_valid": true,
+      "semantic_valid": false,
+      "execution_successful": false,
+      "issues": [
+        "Connection references non-existent transformer: TX_203",
+        "Connection references non-existent bus: BUS_117",
+        "Connection references non-existent transformer: TX_204",
+        "Connection references non-existent bus: BUS_117",
+        "APPEND_STEP references non-existent bay: BAY_337",
+        "Connection references non-existent bus: BUS_115",
+        "Connection references non-existent bay: BAY_305",
+        "Substation must have at least 1 bay"
+      ],
+      "alignment": {
+        "hv_voltage_exact": true,
+        "lv_voltage_exact": true,
+        "voltage_match": true,
+        "capacity_match": true,
+        "feeder_count_exact": false,
+        "feeder_count_reasonable": false,
+        "protection_appropriate": true,
+        "scheme_match": true,
+        "overall_score": 0.8333333333333334,
+        "issues": [
+          "Feeder count mismatch: expected 8, got 0"
+        ]
+      },
+      "final_state": {
+        "buses": 2,
+        "transformers": 3,
+        "bays": 0,
+        "connections": 3
+      },
+      "sequence_preview": "CONNECT_TX_LV TX_203 BUS_117 ADD_TRANSFORMER TWO_WINDING 66KV 115KV 300MVA TX_207 ADD_BUS 25KV LV MAIN BUS_103 CONNECT_TX_LV TX_204 BUS_117 ADD_BUS 13.8KV HV..."
+    },
+    {
+      "test_id": 3,
+      "intent": {
+        "from_kv": 25,
+        "to_kv": 4.16,
+        "rating_mva": 25,
+        "scheme_hv": "single_bus",
+        "lv_feeders": 8,
+        "protection": "standard",
+        "description": "Industrial plant substation"
+      },
+      "philosophy": "standard",
+      "sequence": [
+        "CONNECT_BUS",
+        "BUS_117",
+        "BAY_311"
+      ],
+      "sequence_length": 3,
+      "syntax_valid": true,
+      "semantic_valid": false,
+      "execution_successful": false,
+      "issues": [
+        "Connection references non-existent bus: BUS_117",
+        "Connection references non-existent bay: BAY_311",
+        "Substation must have at least 2 buses (HV and LV)",
+        "Substation must have at least 1 transformer",
+        "Substation must have at least 1 bay",
+        "Transformer must be connected to both HV and LV buses"
+      ],
+      "alignment": {
+        "hv_voltage_exact": false,
+        "lv_voltage_exact": false,
+        "voltage_match": false,
+        "capacity_match": false,
+        "feeder_count_exact": false,
+        "feeder_count_reasonable": false,
+        "protection_appropriate": false,
+        "scheme_match": false,
+        "overall_score": 0.0,
+        "issues": [
+          "Missing HV voltage 25KV, found: []",
+          "Missing LV voltage 13.8KV, found: []",
+          "Missing capacity 50MVA, found: []",
+          "Feeder count mismatch: expected 8, got 0",
+          "Standard protection should include breakers",
+          "Single bus scheme should have \u22651 HV bus, got 0"
+        ]
+      },
+      "final_state": {
+        "buses": 0,
+        "transformers": 0,
+        "bays": 0,
+        "connections": 1
+      },
+      "sequence_preview": "CONNECT_BUS BUS_117 BAY_311"
+    },
+    {
+      "test_id": 3,
+      "intent": {
+        "from_kv": 25,
+        "to_kv": 4.16,
+        "rating_mva": 25,
+        "scheme_hv": "single_bus",
+        "lv_feeders": 8,
+        "protection": "standard",
+        "description": "Industrial plant substation"
+      },
+      "philosophy": "economical",
+      "sequence": [
+        "ADD_TRANSFORMER",
+        "TWO_WINDING",
+        "46KV",
+        "345KV",
+        "10MVA",
+        "TX_202",
+        "ADD_TRANSFORMER",
+        "TWO_WINDING",
+        "66KV",
+        "115KV",
+        "10MVA",
+        "TX_201",
+        "CONNECT_BUS",
+        "BUS_116",
+        "BAY_323",
+        "CONNECT_TX_HV",
+        "TX_206",
+        "BUS_117",
+        "CONNECT_BUS",
+        "BUS_114",
+        "BAY_321",
+        "ADD_TRANSFORMER",
+        "TWO_WINDING",
+        "115KV",
+        "345KV",
+        "50MVA",
+        "TX_205",
+        "APPEND_STEP",
+        "BAY_309",
+        "BUS_ISOLATOR"
+      ],
+      "sequence_length": 30,
+      "syntax_valid": true,
+      "semantic_valid": false,
+      "execution_successful": false,
+      "issues": [
+        "Connection references non-existent bus: BUS_116",
+        "Connection references non-existent bay: BAY_323",
+        "Connection references non-existent transformer: TX_206",
+        "Connection references non-existent bus: BUS_117",
+        "Connection references non-existent bus: BUS_114",
+        "Connection references non-existent bay: BAY_321",
+        "APPEND_STEP references non-existent bay: BAY_309",
+        "Substation must have at least 2 buses (HV and LV)",
+        "Substation must have at least 1 bay",
+        "Transformer must be connected to both HV and LV buses"
+      ],
+      "alignment": {
+        "hv_voltage_exact": false,
+        "lv_voltage_exact": false,
+        "voltage_match": false,
+        "capacity_match": true,
+        "feeder_count_exact": false,
+        "feeder_count_reasonable": false,
+        "protection_appropriate": false,
+        "scheme_match": false,
+        "overall_score": 0.16666666666666666,
+        "issues": [
+          "Missing HV voltage 25KV, found: ['46KV', '345KV', '66KV', '115KV', '115KV', '345KV']",
+          "Missing LV voltage 13.8KV, found: ['46KV', '345KV', '66KV', '115KV', '115KV', '345KV']",
+          "Feeder count mismatch: expected 8, got 0",
+          "Standard protection should include breakers",
+          "Single bus scheme should have \u22651 HV bus, got 0"
+        ]
+      },
+      "final_state": {
+        "buses": 0,
+        "transformers": 3,
+        "bays": 0,
+        "connections": 3
+      },
+      "sequence_preview": "ADD_TRANSFORMER TWO_WINDING 46KV 345KV 10MVA TX_202 ADD_TRANSFORMER TWO_WINDING 66KV 115KV 10MVA TX_201 CONNECT_BUS BUS_116 BAY_323 CONNECT_TX_HV TX_206 BUS_117 CONNECT_BUS BUS_114..."
+    },
+    {
+      "test_id": 4,
+      "intent": {
+        "from_kv": 230,
+        "to_kv": 138,
+        "rating_mva": 300,
+        "scheme_hv": "double_busbar",
+        "lv_feeders": 2,
+        "protection": "enhanced",
+        "description": "Major transmission substation"
+      },
+      "philosophy": "conservative",
+      "sequence": [
+        "CONNECT_TX_LV",
+        "TX_210",
+        "BUS_105",
+        "CONNECT_TX_LV",
+        "TX_203",
+        "BUS_120",
+        "ADD_BUS",
+        "34.5KV",
+        "LV",
+        "MAIN",
+        "BUS_106"
+      ],
+      "sequence_length": 11,
+      "syntax_valid": true,
+      "semantic_valid": false,
+      "execution_successful": false,
+      "issues": [
+        "Connection references non-existent transformer: TX_210",
+        "Connection references non-existent bus: BUS_105",
+        "Connection references non-existent transformer: TX_203",
+        "Connection references non-existent bus: BUS_120",
+        "Substation must have at least 2 buses (HV and LV)",
+        "Substation must have at least 1 transformer",
+        "Substation must have at least 1 bay"
+      ],
+      "alignment": {
+        "hv_voltage_exact": false,
+        "lv_voltage_exact": false,
+        "voltage_match": false,
+        "capacity_match": false,
+        "feeder_count_exact": false,
+        "feeder_count_reasonable": false,
+        "protection_appropriate": false,
+        "scheme_match": false,
+        "overall_score": 0.0,
+        "issues": [
+          "Missing HV voltage 220KV, found: ['34.5KV']",
+          "Missing LV voltage 138KV, found: ['34.5KV']",
+          "Missing capacity 150MVA, found: []",
+          "Feeder count mismatch: expected 2, got 0",
+          "Enhanced protection should include CT (Current Transformers)",
+          "Double busbar scheme should have \u22652 HV buses, got 0"
+        ]
+      },
+      "final_state": {
+        "buses": 1,
+        "transformers": 0,
+        "bays": 0,
+        "connections": 2
+      },
+      "sequence_preview": "CONNECT_TX_LV TX_210 BUS_105 CONNECT_TX_LV TX_203 BUS_120 ADD_BUS 34.5KV LV MAIN BUS_106"
+    },
+    {
+      "test_id": 4,
+      "intent": {
+        "from_kv": 230,
+        "to_kv": 138,
+        "rating_mva": 300,
+        "scheme_hv": "double_busbar",
+        "lv_feeders": 2,
+        "protection": "enhanced",
+        "description": "Major transmission substation"
+      },
+      "philosophy": "standard",
+      "sequence": [
+        "ADD_BAY",
+        "MAIN",
+        "4.16KV",
+        "TRANSFORMER_BAY",
+        "BAY_308"
+      ],
+      "sequence_length": 5,
+      "syntax_valid": true,
+      "semantic_valid": false,
+      "execution_successful": false,
+      "issues": [
+        "Substation must have at least 2 buses (HV and LV)",
+        "Substation must have at least 1 transformer",
+        "Transformer must be connected to both HV and LV buses"
+      ],
+      "alignment": {
+        "hv_voltage_exact": false,
+        "lv_voltage_exact": false,
+        "voltage_match": false,
+        "capacity_match": false,
+        "feeder_count_exact": false,
+        "feeder_count_reasonable": false,
+        "protection_appropriate": false,
+        "scheme_match": false,
+        "overall_score": 0.0,
+        "issues": [
+          "Missing HV voltage 220KV, found: ['4.16KV']",
+          "Missing LV voltage 138KV, found: ['4.16KV']",
+          "Missing capacity 150MVA, found: []",
+          "Feeder count mismatch: expected 2, got 0",
+          "Enhanced protection should include CT (Current Transformers)",
+          "Double busbar scheme should have \u22652 HV buses, got 0"
+        ]
+      },
+      "final_state": {
+        "buses": 0,
+        "transformers": 0,
+        "bays": 1,
+        "connections": 0
+      },
+      "sequence_preview": "ADD_BAY MAIN 4.16KV TRANSFORMER_BAY BAY_308"
+    },
+    {
+      "test_id": 5,
+      "intent": {
+        "from_kv": 34.5,
+        "to_kv": 13.8,
+        "rating_mva": 10,
+        "scheme_hv": "single_bus",
+        "lv_feeders": 3,
+        "protection": "basic",
+        "description": "Rural distribution substation"
+      },
+      "philosophy": "standard",
+      "sequence": [
+        "ADD_TRANSFORMER",
+        "TWO_WINDING",
+        "220KV",
+        "13.8KV",
+        "50MVA",
+        "TX_210",
+        "CONNECT_BUS",
+        "BUS_120",
+        "BAY_309",
+        "APPEND_STEP",
+        "BAY_311",
+        "BREAKER",
+        "CONNECT_BUS",
+        "BUS_120",
+        "BAY_321",
+        "APPEND_STEP",
+        "BAY_339",
+        "BUS_ISOLATOR",
+        "ADD_BUS",
+        "25KV",
+        "MAIN",
+        "MAIN",
+        "BUS_109"
+      ],
+      "sequence_length": 23,
+      "syntax_valid": true,
+      "semantic_valid": false,
+      "execution_successful": false,
+      "issues": [
+        "Connection references non-existent bus: BUS_120",
+        "Connection references non-existent bay: BAY_309",
+        "APPEND_STEP references non-existent bay: BAY_311",
+        "Connection references non-existent bus: BUS_120",
+        "Connection references non-existent bay: BAY_321",
+        "APPEND_STEP references non-existent bay: BAY_339",
+        "Substation must have at least 2 buses (HV and LV)",
+        "Substation must have at least 1 bay",
+        "Transformer must be connected to both HV and LV buses"
+      ],
+      "alignment": {
+        "hv_voltage_exact": false,
+        "lv_voltage_exact": true,
+        "voltage_match": false,
+        "capacity_match": true,
+        "feeder_count_exact": false,
+        "feeder_count_reasonable": false,
+        "protection_appropriate": true,
+        "scheme_match": false,
+        "overall_score": 0.5,
+        "issues": [
+          "Missing HV voltage 34.5KV, found: ['220KV', '13.8KV', '25KV']",
+          "Feeder count mismatch: expected 3, got 0",
+          "Single bus scheme should have \u22651 HV bus, got 0"
+        ]
+      },
+      "final_state": {
+        "buses": 1,
+        "transformers": 1,
+        "bays": 0,
+        "connections": 2
+      },
+      "sequence_preview": "ADD_TRANSFORMER TWO_WINDING 220KV 13.8KV 50MVA TX_210 CONNECT_BUS BUS_120 BAY_309 APPEND_STEP BAY_311 BREAKER CONNECT_BUS BUS_120 BAY_321 APPEND_STEP BAY_339 BUS_ISOLATOR ADD_BUS 25KV..."
+    },
+    {
+      "test_id": 5,
+      "intent": {
+        "from_kv": 34.5,
+        "to_kv": 13.8,
+        "rating_mva": 10,
+        "scheme_hv": "single_bus",
+        "lv_feeders": 3,
+        "protection": "basic",
+        "description": "Rural distribution substation"
+      },
+      "philosophy": "economical",
+      "sequence": [
+        "CONNECT_BUS",
+        "BUS_120",
+        "BAY_339",
+        "CONNECT_TX_LV",
+        "TX_203",
+        "BUS_120"
+      ],
+      "sequence_length": 6,
+      "syntax_valid": true,
+      "semantic_valid": false,
+      "execution_successful": false,
+      "issues": [
+        "Connection references non-existent bus: BUS_120",
+        "Connection references non-existent bay: BAY_339",
+        "Connection references non-existent transformer: TX_203",
+        "Connection references non-existent bus: BUS_120",
+        "Substation must have at least 2 buses (HV and LV)",
+        "Substation must have at least 1 transformer",
+        "Substation must have at least 1 bay",
+        "Transformer must be connected to both HV and LV buses"
+      ],
+      "alignment": {
+        "hv_voltage_exact": false,
+        "lv_voltage_exact": false,
+        "voltage_match": false,
+        "capacity_match": false,
+        "feeder_count_exact": false,
+        "feeder_count_reasonable": false,
+        "protection_appropriate": false,
+        "scheme_match": false,
+        "overall_score": 0.0,
+        "issues": [
+          "Missing HV voltage 34.5KV, found: []",
+          "Missing LV voltage 13.8KV, found: []",
+          "Missing capacity 50MVA, found: []",
+          "Feeder count mismatch: expected 3, got 0",
+          "Basic protection should have breakers with minimal CT usage",
+          "Single bus scheme should have \u22651 HV bus, got 0"
+        ]
+      },
+      "final_state": {
+        "buses": 0,
+        "transformers": 0,
+        "bays": 0,
+        "connections": 2
+      },
+      "sequence_preview": "CONNECT_BUS BUS_120 BAY_339 CONNECT_TX_LV TX_203 BUS_120"
+    },
+    {
+      "test_id": 6,
+      "intent": {
+        "from_kv": 115,
+        "to_kv": 25,
+        "rating_mva": 15,
+        "scheme_hv": "single_bus",
+        "lv_feeders": 2,
+        "protection": "standard",
+        "description": "Specialized high-voltage, low-capacity substation"
+      },
+      "philosophy": "economical",
+      "sequence": [
+        "CONNECT_BUS",
+        "BUS_117",
+        "BAY_320",
+        "CONNECT_TX_LV",
+        "TX_203",
+        "BUS_108",
+        "ADD_TRANSFORMER",
+        "TWO_WINDING",
+        "4.16KV",
+        "115KV",
+        "100MVA",
+        "TX_203",
+        "APPEND_STEP",
+        "BAY_324",
+        "BREAKER",
+        "ADD_BUS",
+        "4.16KV",
+        "MAIN",
+        "MAIN",
+        "BUS_120"
+      ],
+      "sequence_length": 20,
+      "syntax_valid": true,
+      "semantic_valid": false,
+      "execution_successful": false,
+      "issues": [
+        "Connection references non-existent bus: BUS_117",
+        "Connection references non-existent bay: BAY_320",
+        "Connection references non-existent transformer: TX_203",
+        "Connection references non-existent bus: BUS_108",
+        "APPEND_STEP references non-existent bay: BAY_324",
+        "Substation must have at least 2 buses (HV and LV)",
+        "Substation must have at least 1 bay",
+        "Transformer must be connected to both HV and LV buses"
+      ],
+      "alignment": {
+        "hv_voltage_exact": true,
+        "lv_voltage_exact": false,
+        "voltage_match": false,
+        "capacity_match": false,
+        "feeder_count_exact": false,
+        "feeder_count_reasonable": false,
+        "protection_appropriate": true,
+        "scheme_match": false,
+        "overall_score": 0.3333333333333333,
+        "issues": [
+          "Missing LV voltage 25KV, found: ['4.16KV', '115KV', '4.16KV']",
+          "Missing capacity 50MVA, found: ['100MVA']",
+          "Feeder count mismatch: expected 2, got 0",
+          "Single bus scheme should have \u22651 HV bus, got 0"
+        ]
+      },
+      "final_state": {
+        "buses": 1,
+        "transformers": 1,
+        "bays": 0,
+        "connections": 2
+      },
+      "sequence_preview": "CONNECT_BUS BUS_117 BAY_320 CONNECT_TX_LV TX_203 BUS_108 ADD_TRANSFORMER TWO_WINDING 4.16KV 115KV 100MVA TX_203 APPEND_STEP BAY_324 BREAKER ADD_BUS 4.16KV MAIN MAIN BUS_120"
+    }
+  ],
+  "summary": {
+    "syntax_success_rate": 1.0,
+    "semantic_success_rate": 0.0,
+    "intent_alignment_rate": 0.0,
+    "overall_success_rate": 0.3333333333333333
+  }
+}
