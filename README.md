@@ -3,14 +3,16 @@
 Project specifications: 
 
 input: a text prompt with specifications about substation parameters
+
 output: a blueprint of the substation in single line diagram format
 
-The input is converted to an intent file (intent.json) which is then processed by an action generator. So it goes query -> intent.json 
+The user's textual prompt input is converted to an intent file by a general LLM (chatgpt, claude, etc) (intent.json) So it goes query -> intent.json 
 
-There is a diagram file which can programmatically generate the blueprint json of specifications from the action generator output. So it goes intent.json -> action generator -> diagram.json. The diagram.json file contains the entities, their ids, and their connections in the form of connection objects (bus connections and couplers and bays)
+The intent.json file becomes the input to a specialized model.  The model is trained to generate a sequence of actions to build a blueprint.  This will be some DSL (domain specific language). So this step goes intent.json -> blueprint.dsl
 
-then a blueprint maker deterministically builds the blueprint from the diagram.json file. So it goes diagram.json -> blueprint single line diagram. 
+There is a file which can programmatically generate the blueprint from specifications in the input dsl file (from action generator). This is essentially a dsl executor.  so blueprint.dsl -> blueprint single line diagram (SVG or PDF or custom filetype)
 
+The meat of the project comes from the dsl generation step (intent.json -> blueprint.dsl).  So the writeup below highlights the start of a solution to this problem.
 
 ## Project Idea:
 
