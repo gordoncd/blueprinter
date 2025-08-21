@@ -6,7 +6,7 @@ Demonstrates core concept with smallest possible implementation.
 
 Author: Gordon Doore
 Date Created: 2025-08-19
-Last Modified: 2025-08-19
+Last Modified: 2025-08-21
 """
 
 import torch
@@ -26,7 +26,7 @@ from scripts.data.data_generator import ElectricalDataGenerator
 class MinimalConfig:
     """Configuration for minimal model"""
     vocab_size: int = 200  # Will be set from vocabulary size
-    d_model: int = 128
+    d_model: int = 96
     n_heads: int = 2
     n_layers: int = 2
     max_seq_len: int = 200  # Increased to accommodate longer sequences

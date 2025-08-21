@@ -5,6 +5,9 @@ Show successful intent-wise examples from the model validation results
 
 import json
 import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 def format_action_sequence(sequence):
     """Format action sequence for readable display"""

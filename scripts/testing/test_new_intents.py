@@ -9,7 +9,7 @@ import json
 from typing import Dict
 
 # Add the src directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 import torch
 from src.specgen.model import MinimalActionModel, MinimalConfig
