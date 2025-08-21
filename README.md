@@ -112,13 +112,91 @@ The architecture is something to be experimented with, but the basic idea is to 
 
 Alternatively, a simpler model could be used by prepending the intent vector to the sequence of actions, and using a single layer of self-attention to generate the next action in the sequence. This would be less computationally expensive, but may not be able to capture the full complexity of the task.
 
+With the GPT5, I generated an ascii diagram of the current model architecture: 
+```
+                               ┌──────────────────────────────────────────────┐
+                               │                INTENT PATH                   │
+                               │                                              │
+Intent dict ──► extract_intent_features()  ──►  [B,6]                         │
+                               │                     ┌─────────────────────┐  │
+                               │    intent_encoder   │  Linear → ReLU      │  │
+                               │  (2-layer MLP)   ──►│  Linear             │  │
+                               │                     └─────────────────────┘  │
+                               │                               │              │
+                               │                      intent_embed [B,1,d]    │
+                               └───────────────────────────────┬──────────────┘
+                                                               │ (decoder memory)
+                                                               ▼
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                                TOKEN / SEQUENCE PATH                                 │
+│                                                                                      │
+│  Tokens (ids) [B,T]                                                                  │
+│        │                                                                             │
+│        ├──► token_embed: [V,d] ─────────────────────────────────┐                    │
+│        │                                                        │                    │
+│        └──► pos_embed: [max_len,d] ──────► add (token + pos) ───┴─► X₀ [B,T,d]       │
+│                                                                                      │
+│  ┌────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                     Transformer Decoder Stack (n_layers = 2)                   │  │
+│  │                                                                                │  │
+│  │  LAYER 1                                                                       │  │
+│  │  ┌──────────────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  (a) Masked Self-Attn over X₀ (causal)                                   │  │  │
+│  │  │      Q,K,V from X₀  →  Multi-Head (n_heads=2)                            │  │  │
+│  │  │      attends only to ≤ current position                                  │  │  │
+│  │  └──────────────────────────────────────────────────────────────────────────┘  │  │
+│  │                              │ residual + norm                                 │  │
+│  │                              ▼                                                 │  │
+│  │  ┌──────────────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  (b) Cross-Attn to INTENT memory                                         │  │  │
+│  │  │      Q from tokens, K,V from intent_embed [B,1,d]  (2 heads)             │  │  │
+│  │  └──────────────────────────────────────────────────────────────────────────┘  │  │
+│  │                              │ residual + norm                                 │  │
+│  │                              ▼                                                 │  │
+│  │  ┌──────────────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  (c) Feed-Forward (d → 2d → d)                                           │  │  │
+│  │  └──────────────────────────────────────────────────────────────────────────┘  │  │
+│  │                              │ residual + norm                                 │  │
+│  │                              ▼                                                 │  │
+│  │                            X₁ [B,T,d]                                          │  │
+│  │                                                                                │  │
+│  │  LAYER 2: repeats (a) self-attn → (b) cross-attn → (c) FFN over X₁ → X₂        │  │
+│  └────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                      │
+│                           X₂ [B,T,d]                                                 │
+│                               │                                                      │
+│                     output_proj: [d → V]                                             │
+│                               ▼                                                      │
+│                       logits [B,T,V]  ──────────────────► (training) CrossEntropy    │
+│                                           └──────► (inference) Grammar mask → sample │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+
+LEGEND
+- V: vocab size, d: d_model (128), T: sequence length, B: batch size
+- Masked Self-Attn uses a causal mask (each position sees ≤ itself)
+- Cross-Attn queries the single intent vector (memory) at every time step
+- Residual + LayerNorm wrap each sub-block inside a decoder layer
+
+TRAINING (teacher forcing)
+- Inputs:  `<START>, x1, x2, …, x_{T-1}`
+- Targets: `x1, x2, …, x_T(<END>)`
+- Loss: CE over logits vs targets (grammar not used during loss)
+
+INFERENCE (autoregressive)
+- Seed with `<START>`
+- Loop: forward → apply GrammarEnforcer mask on last-step logits → sample/argmax → append
+- Stop on `<END>` or max length
+```
+
+
 # Model Training
 
 It is necessary to enforce grammar while training the model, so that it can generate valid sequences of actions. This can be done by using a loss function that penalizes invalid actions, or by using a validation set to filter out invalid sequences during training.
 
-Currently, a grammar enforcer is used before a sequence is added to the training set, which checks that the sequence is valid and that the actions are in the correct order. This is a simple way to ensure that the model is trained on valid sequences, but it may not be sufficient for more complex tasks.
+A grammar enforcer should be used before a sequence is added to the training set, which checks that the sequence is valid and that the actions are in the correct order. This is a simple way to ensure that the model is trained on valid sequences, but it may not be sufficient for more complex tasks.
 
-Furthermore, while training, the grammar enforcer is used to mask invalid token from generation (so ones that are not grammatically valid).  So the model is always only able to see grammatically correct sequences, and is trained to generate them. In preliminary development, adding this specifically made the model go from 40% syntactic accuracy to nearly 100% syntactic accuracy, so it is a very important part of the training process.
-
+Furthermore, while training, the grammar enforcer should be used to mask invalid token from generation (so ones that are not grammatically valid).  So the model is always only able to see grammatically correct sequences, and is trained to generate them. In preliminary development, adding this specifically made the model go from 40% syntactic accuracy to nearly 100% syntactic accuracy, so it is a very important part of the training process.
 
 
