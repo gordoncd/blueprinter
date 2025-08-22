@@ -18,7 +18,8 @@ def validate(ir: IR) -> None:
         raise DSLValidationError("E.ID.DUP", "Duplicate object ids found.")
 
     # 2) CONNECT chains non-empty; allow OPEN_END/STUB at edges only
-    for chain in ir.series:
+    for chain_info in ir.series:
+        chain = chain_info[0]  # Extract chain from (chain, location) tuple
         if not chain:
             raise DSLValidationError("E.CONNECT.EMPTY", "Empty CONNECT series.")
         for i, itm in enumerate(chain):
@@ -42,7 +43,7 @@ def validate(ir: IR) -> None:
 
     # 4) Breakers should appear in at least one series
     breakers = {oid for oid, o in ir.objects.items() if o.type == "BREAKER"}
-    in_series = {oid for chain in ir.series for oid in chain if isinstance(oid, str)}
+    in_series = {oid for chain_info in ir.series for oid in chain_info[0] if isinstance(oid, str)}
     for brk in breakers:
         if brk not in in_series:
             raise DSLValidationError("E.PROT.BRK_UNUSED", f"Breaker {brk} is not connected.")

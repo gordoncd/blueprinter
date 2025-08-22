@@ -1,0 +1,79 @@
+[
+  {
+    "intent": {
+      "kv_in": ["230kv"],
+      "kv_out": ["13.8kv", "13.8kv", "13.8kv"],
+      "num_transformers": "1",
+      "rated_MVA": "150mva",
+      "percentZ": "8percentZ",
+      "hv_interrupting_kA": "31.5kA",
+      "feeder_thermal_A": "1200A",
+      "reliability_target": "N_1"
+    },
+    "sequence": [
+      "<START>",
+      "ADD_BUS", "id=", "bus100", "kv=", "230kv",
+      "ADD_BUS", "id=", "bus101", "kv=", "13.8kv",
+      "ADD_TRANSFORMER", "id=", "transformer601", "kind=", "TWO_WINDING", 
+      "kv_in=", "230kv", "kv_out=", "13.8kv", "tert_kv=", "13.8kv", 
+      "rated_MVA=", "150mva", "vector_group=", "Dd0", "percentZ=", "8percentZ",
+      "CONNECT", "series=", "[", "bus100", ",", "transformer601", ",", "bus101", "]",
+      "EMIT_SPEC",
+      "<END>"
+    ]
+  },
+  {
+    "intent": {
+      "kv_in": ["345kv"],
+      "kv_out": ["66kv", "66kv"],
+      "num_transformers": "2",
+      "rated_MVA": "100mva",
+      "percentZ": "6percentZ",
+      "hv_interrupting_kA": "40kA",
+      "feeder_thermal_A": "1000A",
+      "reliability_target": "REDUNDANT"
+    },
+    "sequence": [
+      "<START>",
+      "ADD_BUS", "id=", "bus102", "kv=", "345kv",
+      "ADD_BUS", "id=", "bus103", "kv=", "66kv",
+      "ADD_TRANSFORMER", "id=", "transformer602", "kind=", "AUTO", 
+      "kv_in=", "345kv", "kv_out=", "66kv", "tert_kv=", "13.8kv", 
+      "rated_MVA=", "100mva", "vector_group=", "YNd1", "percentZ=", "6percentZ",
+      "ADD_TRANSFORMER", "id=", "transformer603", "kind=", "AUTO", 
+      "kv_in=", "345kv", "kv_out=", "66kv", "tert_kv=", "13.8kv", 
+      "rated_MVA=", "100mva", "vector_group=", "YNd1", "percentZ=", "6percentZ",
+      "CONNECT", "series=", "[", "bus102", ",", "transformer602", ",", "bus103", "]",
+      "CONNECT", "series=", "[", "bus102", ",", "transformer603", ",", "bus103", "]",
+      "EMIT_SPEC",
+      "<END>"
+    ]
+  },
+  {
+    "intent": {
+      "kv_in": ["138kv"],
+      "kv_out": ["25kv", "25kv", "25kv", "25kv"],
+      "num_transformers": "1",
+      "rated_MVA": "75mva",
+      "percentZ": "10percentZ",
+      "hv_interrupting_kA": "25kA",
+      "feeder_thermal_A": "800A",
+      "reliability_target": "N_0"
+    },
+    "sequence": [
+      "<START>",
+      "ADD_BUS", "id=", "bus104", "kv=", "138kv",
+      "ADD_BUS", "id=", "bus105", "kv=", "25kv",
+      "ADD_BAY", "id=", "bay401", "kind=", "FEEDER", "kv=", "25kv", "bus=", "bus105",
+      "ADD_TRANSFORMER", "id=", "transformer604", "kind=", "TWO_WINDING", 
+      "kv_in=", "138kv", "kv_out=", "25kv", "tert_kv=", "25kv", 
+      "rated_MVA=", "75mva", "vector_group=", "Dyn1", "percentZ=", "10percentZ",
+      "ADD_BREAKER", "id=", "breaker201", "kv=", "25kv", "interrupting_kA=", "25kA", 
+      "kind=", "SF6", "continuous_A=", "800A",
+      "CONNECT", "series=", "[", "bus104", ",", "transformer604", ",", "bus105", "]",
+      "APPEND_TO_BAY", "bay_id=", "bay401", "object_id=", "breaker201",
+      "EMIT_SPEC",
+      "<END>"
+    ]
+  }
+]

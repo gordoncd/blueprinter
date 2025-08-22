@@ -741,12 +741,25 @@ class ToIR(Transformer):
         
         for child in _children:
             if isinstance(child, list):
-                # This should be the list of series items
-                series_list = child
+                # This should be the list of series items - extract actual identifiers
+                for item in child:
+                    if hasattr(item, 'children') and item.children:
+                        # This is a Tree object with children - extract the identifier
+                        identifier = item.children[0]
+                        if isinstance(identifier, str):
+                            series_list.append(identifier)
+                        elif hasattr(identifier, 'value'):  # Token
+                            series_list.append(identifier.value)
+                    elif isinstance(item, str):
+                        # Direct string identifier
+                        series_list.append(item)
+                    elif hasattr(item, 'value'):  # Token
+                        if item.value not in {' ', '[', ']', ','}:  # Skip formatting tokens
+                            series_list.append(item.value)
+                    # Skip other tokens like SP, LSQB, RSQB, COMMA
             elif isinstance(child, dict):
                 # This could be extra_params
                 extra = child
-            # Skip other tokens like SP, LSQB, RSQB
         
         self.ir.series.append((series_list, (meta.line, meta.column)))
         return None

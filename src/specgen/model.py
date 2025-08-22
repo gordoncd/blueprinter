@@ -20,12 +20,13 @@ from dataclasses import dataclass
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-from scripts.data.data_generator import ElectricalDataGenerator
+from src.specgen.grammar_enforcer import GrammarEnforcer
+from src.specgen.vocabulary import ActionVocabulary
 
 @dataclass
 class MinimalConfig:
     """Configuration for minimal model"""
-    vocab_size: int = 200  # Will be set from vocabulary size
+    vocab_size: int = 324  # Updated to match actual vocabulary size
     d_model: int = 96
     n_heads: int = 2
     n_layers: int = 2
@@ -33,63 +34,6 @@ class MinimalConfig:
     dropout: float = 0.1
     learning_rate: float = 5e-4
 
-class GrammarEnforcer:
-    """Enforces syntactic grammar for electrical substation action sequences"""
-    
-    def __init__(self, vocab: 'MinimalVocabulary'):
-        self.vocab = vocab
-        self._build_grammar_rules()
-    
-    def _build_grammar_rules(self):
-        """Define valid token transitions and argument patterns"""
-        
-        # Valid action commands
-        self.actions = {
-            "ADD_BUS", "ADD_TRANSFORMER", "ADD_BAY", "APPEND_STEP", 
-            "CONNECT_BUS", "CONNECT_TX_HV", "CONNECT_TX_LV", "EMIT_SPEC"
-        }
-        
-        # Valid voltage tokens
-        self.voltages = {
-            "345KV", "230KV", "220KV", "138KV", "115KV", "69KV", "66KV", 
-            "46KV", "34.5KV", "25KV", "13.8KV", "4.16KV"
-        }
-        
-        # Valid MVA tokens
-        self.mva_ratings = {
-            "300MVA", "150MVA", "100MVA", "75MVA", "50MVA", "25MVA", "10MVA"
-        }
-        
-        # Valid bus/component roles
-        self.roles = {"HV", "LV", "MAIN"}
-        
-        # Valid bay types
-        self.bay_types = {"TRANSFORMER_BAY", "FEEDER_BAY"}
-        
-        # Valid device types for APPEND_STEP
-        self.devices = {"BREAKER", "BUS_ISOLATOR", "LINE_ISOLATOR", "CT"}
-        
-        # Valid transformer types
-        self.transformer_types = {"TWO_WINDING"}
-        
-        # Valid semantic IDs
-        self.bus_ids = {f"BUS_{i}" for i in range(101, 121)}
-        self.tx_ids = {f"TX_{i}" for i in range(201, 211)}
-        self.bay_ids = {f"BAY_{i}" for i in range(301, 341)}
-        
-        # Grammar patterns for each action
-        self.action_patterns = {
-            "ADD_BUS": [self.voltages, self.roles, {"MAIN"}, self.bus_ids],
-            "ADD_TRANSFORMER": [self.transformer_types, self.voltages, self.voltages, self.mva_ratings, self.tx_ids],
-            "ADD_BAY": [self.roles, self.voltages, self.bay_types, self.bay_ids],
-            "APPEND_STEP": [self.bay_ids, self.devices],
-            "CONNECT_BUS": [self.bus_ids, self.bay_ids],
-            "CONNECT_TX_HV": [self.tx_ids, self.bus_ids],
-            "CONNECT_TX_LV": [self.tx_ids, self.bus_ids],
-        }
-        
-        # Special tokens
-        self.special_tokens = {"<START>", "<END>", "<PAD>", "<UNK>"}
     
     def get_valid_next_tokens(self, sequence: List[str]) -> List[str]:
         """Get list of valid next tokens given current sequence"""
@@ -218,64 +162,6 @@ class GrammarEnforcer:
         
         return repaired
 
-class MinimalVocabulary:
-    """Simplified vocabulary for proof of concept"""
-    
-    def __init__(self):
-        self.vocab = self._create_vocab()
-        self.token_to_id = {token: i for i, token in enumerate(self.vocab)}
-        self.id_to_token = {i: token for token, i in self.token_to_id.items()}
-    
-    def _create_vocab(self) -> List[str]:
-        """Create minimal vocabulary focusing on most common tokens"""
-        vocab = [
-            # Special tokens
-            "<START>", "<END>", "<PAD>", "<UNK>",
-            
-            # Core actions
-            "ADD_BUS", "ADD_TRANSFORMER", "ADD_BAY", "APPEND_STEP", 
-            "ADD_CONNECTION", "EMIT_SPEC",
-            
-            # Common parameters
-            "345KV", "230KV", "220KV", "138KV", "115KV", "69KV", "66KV", "46KV","34.5KV", "25KV", "13.8KV", "4.16KV",
-            "300MVA", "150MVA", "100MVA", "75MVA", "50MVA", "25MVA", "10MVA",
-            "HV", "LV", "MAIN", "TRANSFORMER_BAY", "FEEDER_BAY",
-            "BREAKER", "BUS_ISOLATOR", "LINE_ISOLATOR", "CT",
-            "TWO_WINDING", "DOUBLE_BUSBAR", "SINGLE_BUSBAR",
-            
-            # Connection indicators
-            "CONNECT_BUS", "CONNECT_TX_HV", "CONNECT_TX_LV",
-            
-            # Semantic ID system - grouped by component type
-            # Buses: 101-120 (20 buses)
-            "BUS_101", "BUS_102", "BUS_103", "BUS_104", "BUS_105", "BUS_106", "BUS_107", "BUS_108", "BUS_109", "BUS_110",
-            "BUS_111", "BUS_112", "BUS_113", "BUS_114", "BUS_115", "BUS_116", "BUS_117", "BUS_118", "BUS_119", "BUS_120",
-            
-            # Transformers: 201-210 (10 transformers)
-            "TX_201", "TX_202", "TX_203", "TX_204", "TX_205", "TX_206", "TX_207", "TX_208", "TX_209", "TX_210",
-            
-            # Bays: 301-340 (40 bays total - mix of HV and LV)
-            "BAY_301", "BAY_302", "BAY_303", "BAY_304", "BAY_305", "BAY_306", "BAY_307", "BAY_308", "BAY_309", "BAY_310",
-            "BAY_311", "BAY_312", "BAY_313", "BAY_314", "BAY_315", "BAY_316", "BAY_317", "BAY_318", "BAY_319", "BAY_320",
-            "BAY_321", "BAY_322", "BAY_323", "BAY_324", "BAY_325", "BAY_326", "BAY_327", "BAY_328", "BAY_329", "BAY_330",
-            "BAY_331", "BAY_332", "BAY_333", "BAY_334", "BAY_335", "BAY_336", "BAY_337", "BAY_338", "BAY_339", "BAY_340"
-            
-            # Note: Devices (up to 100) don't need explicit IDs as they are ordered lists within bays
-        ]
-        
-        # Pad to vocab_size if needed
-        while len(vocab) < 120:
-            vocab.append(f"<RESERVED_{len(vocab)}>")
-        
-        return vocab[:120]  # Limit to exact vocab size
-    
-    def encode(self, tokens: List[str]) -> List[int]:
-        """Convert tokens to IDs"""
-        return [self.token_to_id.get(token, self.token_to_id["<UNK>"]) for token in tokens]
-    
-    def decode(self, ids: List[int]) -> List[str]:
-        """Convert IDs to tokens"""
-        return [self.id_to_token.get(id, "<UNK>") for id in ids]
 
 class MinimalTransformer(nn.Module):
     """Tiny transformer for action sequence generation"""
@@ -288,9 +174,12 @@ class MinimalTransformer(nn.Module):
         self.token_embed = nn.Embedding(config.vocab_size, config.d_model)
         self.pos_embed = nn.Embedding(config.max_seq_len, config.d_model)
         
-        # Intent encoder (simple MLP)
+        # Intent encoder (handles structured intent + grammar state)
+        # Intent features: kv_in(11) + kv_out(11) + num_transformers(1) + mva(1) + percentZ(1) + kA(1) + thermal_A(1) + reliability(5) = 32
+        # Grammar state features: basic_states(5) + inside_bracket(1) + current_action(10) + param_position(1) + seq_len(1) = 18
+        # Total: 32 + 18 = 50
         self.intent_encoder = nn.Sequential(
-            nn.Linear(6, config.d_model),  # 6 basic intent features
+            nn.Linear(50, config.d_model),  # Updated for intent + grammar state features
             nn.ReLU(),
             nn.Linear(config.d_model, config.d_model)
         )
@@ -311,18 +200,28 @@ class MinimalTransformer(nn.Module):
         self.output_proj = nn.Linear(config.d_model, config.vocab_size)
         self.dropout = nn.Dropout(config.dropout)
     
-    def forward(self, intent_features: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor:
+    def forward(self, intent_features: torch.Tensor, token_ids: torch.Tensor, 
+               grammar_state_features: torch.Tensor = None) -> torch.Tensor:
         """
         Args:
-            intent_features: [batch_size, 6] - basic intent features
+            intent_features: [batch_size, 32] - basic intent features
             token_ids: [batch_size, seq_len] - token sequence
+            grammar_state_features: [batch_size, 18] - grammar state features (optional)
         Returns:
             logits: [batch_size, seq_len, vocab_size]
         """
         batch_size, seq_len = token_ids.shape
         
-        # Encode intent
-        intent_embed = self.intent_encoder(intent_features)  # [batch_size, d_model]
+        # Combine intent and grammar state features
+        if grammar_state_features is not None:
+            combined_features = torch.cat([intent_features, grammar_state_features], dim=-1)
+        else:
+            # Fallback: pad with zeros if no grammar state provided
+            zero_grammar = torch.zeros(batch_size, 18, device=intent_features.device)
+            combined_features = torch.cat([intent_features, zero_grammar], dim=-1)
+        
+        # Encode combined features
+        intent_embed = self.intent_encoder(combined_features)  # [batch_size, d_model]
         intent_embed = intent_embed.unsqueeze(1)  # [batch_size, 1, d_model]
         
         # Token embeddings
@@ -330,6 +229,8 @@ class MinimalTransformer(nn.Module):
         
         # Position embeddings
         positions = torch.arange(seq_len, device=token_ids.device)
+        # Clamp positions to avoid out-of-bounds during generation
+        positions = torch.clamp(positions, max=self.config.max_seq_len - 1)
         pos_embeds = self.pos_embed(positions).unsqueeze(0)  # [1, seq_len, d_model]
         
         # Combine embeddings
@@ -353,319 +254,376 @@ class MinimalActionModel:
     
     def __init__(self, config: MinimalConfig):
         self.config = config
-        self.vocab = MinimalVocabulary()
+        self.vocab = ActionVocabulary()
         self.model = MinimalTransformer(config)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.learning_rate)
         self.grammar = GrammarEnforcer(self.vocab)  # Add grammar enforcer
     
+    def encode_grammar_state(self, sequence: List[str]) -> torch.Tensor:
+        """Encode the current grammar state as a feature vector
+        
+        Args:
+            sequence: Current token sequence
+            
+        Returns:
+            Grammar state tensor with encoded features
+        """
+        # Get current grammar state from the enforcer
+        current_state = self.grammar.get_current_state(sequence)
+        
+        # Define state encodings - these capture the structural context
+        state_features = []
+        
+        # 1. Basic state encoding (one-hot for main states) - aligned with actual grammar
+        basic_states = ['START', 'EXPECT_ACTION', 'EXPECT_PARAMS', 'ACTION_COMPLETE', 'COMPLETE']
+        state_vector = [0.0] * len(basic_states)
+        for i, state in enumerate(basic_states):
+            if current_state == state or state in current_state:
+                state_vector[i] = 1.0
+        state_features.extend(state_vector)
+        
+        # 2. Inside list/bracket context (critical for CONNECT sequences)
+        inside_bracket = 0.0
+        bracket_count = 0
+        if sequence:
+            for token in sequence:
+                if token == '[':
+                    bracket_count += 1
+                elif token == ']':
+                    bracket_count -= 1
+            inside_bracket = 1.0 if bracket_count > 0 else 0.0
+        state_features.append(inside_bracket)
+        
+        # 3. Action context encoding
+        current_action_features = [0.0] * 10  # 10 main actions
+        actions = ['ADD_BUS', 'ADD_BAY', 'ADD_COUPLER', 'ADD_BREAKER', 'ADD_DISCONNECTOR', 
+                  'ADD_TRANSFORMER', 'ADD_LINE', 'CONNECT', 'APPEND_TO_BAY', 'VALIDATE']
+        
+        # Find current action
+        current_action = None
+        if sequence:
+            for i in range(len(sequence) - 1, -1, -1):
+                if sequence[i] in actions:
+                    current_action = sequence[i]
+                    break
+        
+        if current_action:
+            action_idx = actions.index(current_action)
+            current_action_features[action_idx] = 1.0
+        state_features.extend(current_action_features)
+        
+        # 4. Parameter position encoding (which parameter we're expecting)
+        param_position = 0.0
+        if current_action and current_action in self.grammar.action_param_sequences:
+            expected_params = self.grammar.action_param_sequences[current_action]
+            # Find action start position
+            action_start_idx = -1
+            for i in range(len(sequence) - 1, -1, -1):
+                if sequence[i] == current_action:
+                    action_start_idx = i
+                    break
+            
+            if action_start_idx >= 0:
+                tokens_since_action = sequence[action_start_idx + 1:]
+                param_position = float(len(tokens_since_action)) / max(len(expected_params), 1)
+        
+        state_features.append(param_position)
+        
+        # 5. Sequence length encoding (normalized)
+        seq_len_normalized = len(sequence) / 200.0  # Max sequence length
+        state_features.append(seq_len_normalized)
+        
+        return torch.tensor(state_features, dtype=torch.float32)
+
     def extract_intent_features(self, intent: Dict) -> torch.Tensor:
-        """Extract enhanced features from intent JSON with explicit voltage mapping"""
+        """Extract features from new structured intent format using vocabulary tokens"""
         
-        # Map voltages to their vocab token indices for better learning
-        voltage_vocab = ["345KV", "220KV", "138KV", "115KV", "69KV", "66KV", "34.5KV", "25KV", "13.8KV", "4.16KV"]
+        # New intent structure using vocabulary tokens directly
+        features = []
         
-        def voltage_to_index(kv_value):
-            """Map voltage value to vocabulary index"""
-            kv_str = f"{kv_value}KV"
-            if kv_str in voltage_vocab:
-                return float(voltage_vocab.index(kv_str))
-            # Find closest match
-            closest_idx = 0
-            closest_diff = float('inf')
-            for i, vocab_kv in enumerate(voltage_vocab):
-                vocab_val = float(vocab_kv.replace("KV", ""))
-                diff = abs(vocab_val - kv_value)
-                if diff < closest_diff:
-                    closest_diff = diff
-                    closest_idx = i
-            return float(closest_idx)
+        # 1. HV voltage levels (kv_in) - encode as multi-hot vector
+        kv_in_list = intent.get("kv_in", ["230kv"])
+        voltage_vocab = ["345kv", "230kv", "138kv", "115kv", "69kv", "66kv", "46kv", "34.5kv", "25kv", "13.8kv", "4.16kv"]
+        kv_in_vector = [0.0] * len(voltage_vocab)
+        for voltage in kv_in_list:
+            if voltage in voltage_vocab:
+                kv_in_vector[voltage_vocab.index(voltage)] = 1.0
+        features.extend(kv_in_vector)
         
-        # Map MVA ratings to indices
-        mva_vocab = ["300MVA", "150MVA", "100MVA", "75MVA", "50MVA", "25MVA", "10MVA"]
+        # 2. LV voltage levels (kv_out) - encode count per voltage
+        kv_out_list = intent.get("kv_out", ["13.8kv", "13.8kv"])  # duplicates = feeder count
+        kv_out_counts = [0.0] * len(voltage_vocab)
+        for voltage in kv_out_list:
+            if voltage in voltage_vocab:
+                kv_out_counts[voltage_vocab.index(voltage)] += 1.0
+        features.extend(kv_out_counts)
         
-        def mva_to_index(mva_value):
-            """Map MVA value to vocabulary index"""
-            mva_str = f"{int(mva_value)}MVA"
-            if mva_str in mva_vocab:
-                return float(mva_vocab.index(mva_str))
-            # Find closest match
-            closest_idx = 0
-            closest_diff = float('inf')
-            for i, vocab_mva in enumerate(mva_vocab):
-                vocab_val = int(vocab_mva.replace("MVA", ""))
-                diff = abs(vocab_val - mva_value)
-                if diff < closest_diff:
-                    closest_diff = diff
-                    closest_idx = i
-            return float(closest_idx)
+        # 3. Number of transformers - normalize count
+        num_transformers = int(intent.get("num_transformers", "2"))
+        features.append(float(num_transformers) / 10.0)  # Normalize to 0-1 range
         
-        features = [
-            voltage_to_index(float(intent.get("from_kv", 220))),  # HV voltage index
-            voltage_to_index(float(intent.get("to_kv", 66))),     # LV voltage index
-            mva_to_index(float(intent.get("rating_mva", 100))),   # MVA rating index
-            float(intent.get("lv_feeders", 2)),                   # Number of feeders
-            1.0 if intent.get("scheme_hv") == "double_busbar" else 0.0,
-            1.0 if intent.get("scheme_lv") == "radial" else 0.0
-        ]
+        # 4. MVA rating - encode as index
+        rated_mva = intent.get("rated_MVA", "150mva")
+        mva_vocab = ["300mva", "150mva", "100mva", "75mva", "50mva", "25mva", "10mva", "5mva", "2.5mva", "1mva"]
+        mva_index = float(mva_vocab.index(rated_mva)) if rated_mva in mva_vocab else 1.0
+        features.append(mva_index / len(mva_vocab))  # Normalize
+        
+        # 5. Percent impedance - encode as index
+        percent_z = intent.get("percentZ", "8percentZ")
+        percentz_vocab = ["10percentZ", "8percentZ", "6percentZ", "4percentZ", "2percentZ", "1percentZ", "0.5percentZ"]
+        percentz_index = float(percentz_vocab.index(percent_z)) if percent_z in percentz_vocab else 1.0
+        features.append(percentz_index / len(percentz_vocab))  # Normalize
+        
+        # 6. HV interrupting current - encode as index
+        hv_interrupting = intent.get("hv_interrupting_kA", "31.5kA")
+        ka_vocab = ["63kA", "50kA", "40kA", "31.5kA", "25kA", "20kA", "16kA", "12.5kA", "10kA", "6.3kA", "4kA", "2.5kA"]
+        ka_index = float(ka_vocab.index(hv_interrupting)) if hv_interrupting in ka_vocab else 3.0
+        features.append(ka_index / len(ka_vocab))  # Normalize
+        
+        # 7. Feeder thermal ampacity - encode as index
+        feeder_thermal = intent.get("feeder_thermal_A", "1200A")
+        thermal_vocab = ["1200A", "1000A", "800A", "600A", "400A", "200A", "100A", "50A"]
+        thermal_index = float(thermal_vocab.index(feeder_thermal)) if feeder_thermal in thermal_vocab else 0.0
+        features.append(thermal_index / len(thermal_vocab))  # Normalize
+        
+        # 8. Reliability target - encode as categorical
+        reliability = intent.get("reliability_target", "N_1")
+        reliability_vocab = ["N_0", "N_1", "N_2", "REDUNDANT", "MINIMAL"]
+        reliability_vector = [0.0] * len(reliability_vocab)
+        if reliability in reliability_vocab:
+            reliability_vector[reliability_vocab.index(reliability)] = 1.0
+        else:
+            reliability_vector[1] = 1.0  # Default to N_1
+        features.extend(reliability_vector)
+        
         return torch.tensor(features, dtype=torch.float32)
     
-    def create_training_example(self, intent: Dict) -> Tuple[torch.Tensor, List[str]]:
-        """Create single training example from intent with design variations"""
-        # Simple canonical sequence based on intent
-        tokens = ["<START>"]
+    def compute_grammar_aware_loss(self, logits: torch.Tensor, targets: torch.Tensor, 
+                                  sequences: List[List[str]], grammar_weight: float = 0.1) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Compute loss with grammar penalty component enhanced by state encoding
         
-        # Add buses using semantic IDs (with some variation in approach)
-        if intent.get("scheme_hv") == "double_busbar":
-            tokens.extend([
-                "ADD_BUS", f"{intent['from_kv']}KV", "HV", "MAIN", "BUS_101",
-                "ADD_BUS", f"{intent['from_kv']}KV", "HV", "MAIN", "BUS_102"
-            ])
-            main_bus = "BUS_101"  # Primary bus for connections
-        else:
-            tokens.extend([
-                "ADD_BUS", f"{intent['from_kv']}KV", "HV", "MAIN", "BUS_101"
-            ])
-            main_bus = "BUS_101"
-        
-        # Add LV bus
-        tokens.extend([
-            "ADD_BUS", f"{intent['to_kv']}KV", "LV", "MAIN", "BUS_103"
-        ])
-        
-        # Add transformer
-        tokens.extend([
-            "ADD_TRANSFORMER", "TWO_WINDING", f"{intent['from_kv']}KV", 
-            f"{intent['to_kv']}KV", f"{intent['rating_mva']}MVA", "TX_201"
-        ])
-        
-        # Add transformer bay with variation based on protection level
-        protection_level = intent.get("protection", "standard")
-        tokens.extend([
-            "ADD_BAY", "HV", f"{intent['from_kv']}KV", "TRANSFORMER_BAY", "BAY_301"
-        ])
-        
-        # Vary protection sequence based on design philosophy
-        if protection_level == "enhanced":
-            tokens.extend([
-                "APPEND_STEP", "BAY_301", "BUS_ISOLATOR",
-                "APPEND_STEP", "BAY_301", "CT",  # Current transformer for enhanced protection
-                "APPEND_STEP", "BAY_301", "BREAKER",
-                "APPEND_STEP", "BAY_301", "LINE_ISOLATOR"
-            ])
-        elif protection_level == "basic":
-            tokens.extend([
-                "APPEND_STEP", "BAY_301", "BREAKER",
-                "APPEND_STEP", "BAY_301", "BUS_ISOLATOR"
-            ])
-        else:  # standard
-            tokens.extend([
-                "APPEND_STEP", "BAY_301", "BUS_ISOLATOR",
-                "APPEND_STEP", "BAY_301", "BREAKER",
-                "APPEND_STEP", "BAY_301", "LINE_ISOLATOR"
-            ])
-        
-        # Add feeders with some variation
-        num_feeders = int(intent.get("lv_feeders", 2))
-        for i in range(num_feeders):
-            bay_id = f"BAY_{302+i}"
-            tokens.extend([
-                "ADD_BAY", "LV", f"{intent['to_kv']}KV", "FEEDER_BAY", bay_id
-            ])
+        Args:
+            logits: Model predictions [batch_size, seq_len, vocab_size]
+            targets: Target token ids [batch_size, seq_len]  
+            sequences: Token sequences for grammar validation [batch_size, seq_len]
+            grammar_weight: Weight for grammar penalty term
             
-            # Vary feeder protection based on importance/size
-            if i == 0 or protection_level == "enhanced":  # First feeder or enhanced gets more protection
-                tokens.extend([
-                    "APPEND_STEP", bay_id, "BUS_ISOLATOR",
-                    "APPEND_STEP", bay_id, "BREAKER",
-                    "APPEND_STEP", bay_id, "CT"
-                ])
-            else:  # Subsequent feeders get basic protection
-                tokens.extend([
-                    "APPEND_STEP", bay_id, "BREAKER",
-                    "APPEND_STEP", bay_id, "BUS_ISOLATOR"
-                ])
+        Returns:
+            total_loss, cross_entropy_loss, grammar_penalty
+        """
+        # Standard cross-entropy loss
+        ce_loss = F.cross_entropy(
+            logits.reshape(-1, self.config.vocab_size),
+            targets.reshape(-1),
+            ignore_index=self.vocab.token_to_id.get("<PAD>", 0)
+        )
         
-        # Add connections
-        tokens.extend([
-            "CONNECT_BUS", main_bus, "BAY_301",
-            "CONNECT_TX_HV", "TX_201", main_bus,
-            "CONNECT_TX_LV", "TX_201", "BUS_103"
-        ])
+        # Enhanced grammar penalty using state encoding
+        grammar_penalty = 0.0
+        batch_size, seq_len = targets.shape
         
-        tokens.append("<END>")
+        for b in range(batch_size):
+            for t in range(seq_len):
+                # Skip padding tokens
+                if targets[b, t] == self.vocab.token_to_id.get("<PAD>", 0):
+                    continue
+                
+                # Reconstruct sequence up to position t
+                current_seq = []
+                for i in range(t + 1):
+                    token_id = targets[b, i].item()
+                    if token_id < len(self.vocab.vocab):
+                        current_seq.append(self.vocab.id_to_token[token_id])
+                
+                if not current_seq:
+                    continue
+                
+                # Get grammar state for enhanced penalty weighting
+                try:
+                    grammar_state = self.encode_grammar_state(current_seq[:-1])  # Exclude target token
+                    inside_bracket = grammar_state[5].item()  # Inside bracket feature
+                    
+                    # Get valid tokens using grammar enforcer
+                    dummy_logits = torch.zeros(self.config.vocab_size)
+                    masked_logits, valid_tokens, current_state = self.grammar.process_and_mask_for_generation(
+                        current_seq[:-1], dummy_logits
+                    )
+                    
+                    # Find which tokens are invalid
+                    invalid_mask = torch.isinf(masked_logits)
+                    
+                    # Get prediction probabilities
+                    pred_probs = F.softmax(logits[b, t], dim=-1)
+                    
+                    # Calculate base penalty
+                    invalid_prob_mass = torch.sum(pred_probs[invalid_mask])
+                    
+                    # Apply enhanced penalty based on grammar state
+                    penalty_multiplier = 1.0
+                    
+                    # Higher penalty when inside brackets (stricter ID token enforcement)
+                    if inside_bracket > 0.5:
+                        penalty_multiplier *= 3.0  # Much higher penalty inside brackets
+                        
+                        # Extra penalty for non-ID tokens when inside brackets
+                        id_tokens = set()
+                        for token_set_name in ['bus_ids', 'breaker_ids', 'coupler_ids', 'bay_ids', 
+                                             'disconnector_ids', 'transformer_ids', 'line_ids']:
+                            if token_set_name in self.vocab.token_sets:
+                                id_tokens.update(self.vocab.token_sets[token_set_name])
+                        id_tokens.update({',', ']'})  # Allow comma and closing bracket
+                        
+                        # Check if predicted token is not an ID token
+                        predicted_token_id = torch.argmax(pred_probs).item()
+                        if predicted_token_id < len(self.vocab.vocab):
+                            predicted_token = self.vocab.id_to_token[predicted_token_id]
+                            if predicted_token not in id_tokens:
+                                penalty_multiplier *= 5.0  # Severe penalty for wrong token types in brackets
+                    
+                    # Apply context-sensitive penalty
+                    grammar_penalty += penalty_multiplier * invalid_prob_mass
+                    
+                except Exception:
+                    # Fallback to standard penalty if state processing fails
+                    continue
         
-        # Clean up tokens to match vocabulary
-        cleaned_tokens = []
-        for token in tokens:
-            if token in self.vocab.token_to_id:
-                cleaned_tokens.append(token)
-            else:
-                # Map unknown tokens to closest match
-                if token.endswith("KV"):
-                    # Map voltage to closest vocabulary voltage
-                    if "345" in token:
-                        cleaned_tokens.append("345KV")
-                    elif "220" in token:
-                        cleaned_tokens.append("220KV")
-                    elif "138" in token:
-                        cleaned_tokens.append("138KV")
-                    elif "115" in token:
-                        cleaned_tokens.append("115KV")
-                    elif "69" in token:
-                        cleaned_tokens.append("69KV")
-                    elif "66" in token:
-                        cleaned_tokens.append("66KV")
-                    elif "34.5" in token or "34_5" in token:
-                        cleaned_tokens.append("34.5KV")
-                    elif "25" in token:
-                        cleaned_tokens.append("25KV")
-                    elif "13.8" in token:
-                        cleaned_tokens.append("13.8KV")
-                    else:
-                        cleaned_tokens.append("220KV")  # Default
-                elif token.endswith("MVA"):
-                    # Map MVA to closest vocabulary MVA
-                    if "150" in token:
-                        cleaned_tokens.append("150MVA")
-                    elif "100" in token:
-                        cleaned_tokens.append("100MVA")
-                    elif "75" in token:
-                        cleaned_tokens.append("75MVA")
-                    elif "50" in token:
-                        cleaned_tokens.append("50MVA")
-                    else:
-                        cleaned_tokens.append("100MVA")  # Default
-                else:
-                    cleaned_tokens.append("<UNK>")
+        # Normalize by total predictions
+        if batch_size * seq_len > 0:
+            grammar_penalty = grammar_penalty / (batch_size * seq_len)
         
-        intent_features = self.extract_intent_features(intent)
-        return intent_features, cleaned_tokens
+        # Combine losses
+        total_loss = ce_loss + grammar_weight * grammar_penalty
+        
+        return total_loss, ce_loss, grammar_penalty
     
-    def generate_training_data(self, num_examples: int = 100, use_realistic_data: bool = True) -> List[Tuple[torch.Tensor, List[str]]]:
-        """Generate synthetic training dataset with option for realistic data"""
+    def load_training_data(self, data_file: str = "data/dev_data.json") -> List[Tuple[torch.Tensor, List[str]]]:
+        """Load training data from external file"""
+        import os
         
-        if use_realistic_data:
-            # Use the advanced data generator
+        # Get the project root directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.join(current_dir, '..', '..')
+        data_path = os.path.join(project_root, data_file)
+        
+        training_examples = []
+        
+        try:
+            with open(data_path, 'r') as f:
+                data = json.load(f)
             
-            generator = ElectricalDataGenerator()
-            realistic_dataset = generator.generate_training_dataset(num_examples)
-            
-            training_data = []
-            for example in realistic_dataset:
+            for example in data:
                 intent = example["intent"]
-                features, tokens = self.create_training_example(intent)
-                training_data.append((features, tokens))
+                sequence = example["sequence"]
+                
+                # Extract intent features using the new format
+                intent_features = self.extract_intent_features(intent)
+                training_examples.append((intent_features, sequence))
+                
+            print(f"Loaded {len(training_examples)} training examples from {data_file}")
             
-            return training_data
-        
-        else:
-            # Fall back to simple synthetic data (original method)
-            # Expanded base intent variations for more diversity
-            base_intents = [
-                # Standard configurations
-                {"from_kv": 220, "to_kv": 66, "rating_mva": 100, "scheme_hv": "double_busbar", "lv_feeders": 2, "protection": "standard"},
-                {"from_kv": 138, "to_kv": 13.8, "rating_mva": 75, "scheme_hv": "single_busbar", "lv_feeders": 3, "protection": "standard"},
-                {"from_kv": 69, "to_kv": 13.8, "rating_mva": 50, "scheme_hv": "double_busbar", "lv_feeders": 4, "protection": "standard"},
-                
-                # High-reliability variations
-                {"from_kv": 220, "to_kv": 66, "rating_mva": 100, "scheme_hv": "double_busbar", "lv_feeders": 2, "protection": "enhanced"},
-                {"from_kv": 138, "to_kv": 66, "rating_mva": 150, "scheme_hv": "double_busbar", "lv_feeders": 6, "protection": "enhanced"},
-                
-                # Compact/cost-optimized variations
-                {"from_kv": 138, "to_kv": 25, "rating_mva": 50, "scheme_hv": "single_busbar", "lv_feeders": 2, "protection": "basic"},
-                {"from_kv": 69, "to_kv": 13.8, "rating_mva": 75, "scheme_hv": "single_busbar", "lv_feeders": 3, "protection": "basic"},
-                
-                # Industrial/special purpose
-                {"from_kv": 345, "to_kv": 138, "rating_mva": 150, "scheme_hv": "double_busbar", "lv_feeders": 8, "protection": "enhanced"},
-                {"from_kv": 115, "to_kv": 34.5, "rating_mva": 75, "scheme_hv": "single_busbar", "lv_feeders": 4, "protection": "standard"},
-            ]
+        except FileNotFoundError:
+            print(f"Warning: Training data file {data_path} not found. Using empty dataset.")
+            return []
+        except Exception as e:
+            print(f"Error loading training data: {e}")
+            return []
             
-            training_data = []
-            
-            for i in range(num_examples):
-                # Pick base intent and add variations
-                intent = base_intents[i % len(base_intents)].copy()
-                
-                # Add controlled randomness for variety
-                intent["lv_feeders"] = random.randint(max(2, intent["lv_feeders"]-1), intent["lv_feeders"]+2)
-                intent["lv_feeders"] = min(intent["lv_feeders"], 8)  # Cap at 8 feeders
-                
-                # Randomly vary some design choices
-                if random.random() < 0.3:  # 30% chance to flip busbar scheme
-                    intent["scheme_hv"] = "single_busbar" if intent["scheme_hv"] == "double_busbar" else "double_busbar"
-                
-                # Create training example
-                features, tokens = self.create_training_example(intent)
-                training_data.append((features, tokens))
-            
-            return training_data
+        return training_examples
     
-    def validate_training_sequence(self, tokens: List[str]) -> List[str]:
-        """Validate and repair training sequence using grammar rules"""
-        if not tokens:
-            return ["<START>", "<END>"]
+    def train(self, data_file: str = "data/dev_data.json", num_epochs: int = 10, 
+              use_grammar_loss: bool = True, grammar_weight: float = 0.1):
+        """Training loop using external data file with optional grammar-aware loss
         
-        # Ensure proper start/end tokens
-        if tokens[0] != "<START>":
-            tokens = ["<START>"] + tokens
-        if tokens[-1] != "<END>":
-            tokens = tokens + ["<END>"]
+        Args:
+            data_file: Path to training data
+            num_epochs: Number of training epochs
+            use_grammar_loss: Whether to use grammar penalty in loss
+            grammar_weight: Weight for grammar penalty component
+        """
+        print(f"Loading training data from {data_file}...")
+        training_data = self.load_training_data(data_file)
         
-        # Apply grammar repair
-        if not self.grammar.is_sequence_complete(tokens):
-            tokens = self.grammar.repair_sequence(tokens)
-        
-        return tokens
-    
-    def train(self, num_examples: int = 100, num_epochs: int = 10):
-        """Simple training loop"""
-        print(f"Generating {num_examples} training examples...")
-        training_data = self.generate_training_data(num_examples)
+        if not training_data:
+            print("No training data available. Cannot train model.")
+            return
         
         print(f"Training for {num_epochs} epochs...")
+        if use_grammar_loss:
+            print(f"Using grammar-aware loss with weight {grammar_weight}")
         
         self.model.train()
         
         for epoch in range(num_epochs):
-            epoch_loss = 0.0
+            epoch_total_loss = 0.0
+            epoch_ce_loss = 0.0
+            epoch_grammar_penalty = 0.0
             
             # Shuffle data
             random.shuffle(training_data)
             
             for intent_features, tokens in training_data:
-                # Validate sequence grammar
-                validated_tokens = self.validate_training_sequence(tokens)
+                # Use unified grammar enforcer method to check, repair, and convert to indices
+                token_ids, is_valid, error_message = self.grammar.process_sequence_for_training(
+                    tokens, repair_if_invalid=True
+                )
                 
-                # Encode tokens
-                token_ids = self.vocab.encode(validated_tokens)
+                # Log any repair actions for debugging
+                if not is_valid:
+                    print(f"Warning: Invalid sequence processed - {error_message}")
                 
-                # Skip sequences that are too long
+                # Skip sequences that are too long after processing
                 if len(token_ids) > self.config.max_seq_len:
                     continue
-                
+                    
                 # Prepare tensors
                 intent_batch = intent_features.unsqueeze(0)  # Add batch dimension
                 input_ids = torch.tensor([token_ids[:-1]], dtype=torch.long)  # All but last
                 target_ids = torch.tensor([token_ids[1:]], dtype=torch.long)   # All but first
                 
-                # Forward pass
-                logits = self.model(intent_batch, input_ids)
+                # Compute grammar state features for input sequence
+                # Convert input token ids back to tokens for grammar state computation
+                input_tokens = self.vocab.decode(input_ids[0].tolist())
+                grammar_state = self.encode_grammar_state(["<START>"] + input_tokens)
+                grammar_state_batch = grammar_state.unsqueeze(0)  # Add batch dimension
                 
-                # Compute loss
-                loss = F.cross_entropy(
-                    logits.reshape(-1, self.config.vocab_size),
-                    target_ids.reshape(-1)
-                )
+                # Forward pass with grammar state
+                logits = self.model(intent_batch, input_ids, grammar_state_batch)
+                
+                # Compute loss (grammar-aware or standard)
+                if use_grammar_loss:
+                    # Convert target ids back to token sequences for grammar checking
+                    target_sequences = [self.vocab.decode(target_ids[0].tolist())]
+                    total_loss, ce_loss, grammar_penalty = self.compute_grammar_aware_loss(
+                        logits, target_ids, target_sequences, grammar_weight
+                    )
+                    
+                    epoch_ce_loss += ce_loss.item()
+                    epoch_grammar_penalty += grammar_penalty.item()
+                else:
+                    # Standard cross-entropy loss
+                    total_loss = F.cross_entropy(
+                        logits.reshape(-1, self.config.vocab_size),
+                        target_ids.reshape(-1)
+                    )
                 
                 # Backward pass
                 self.optimizer.zero_grad()
-                loss.backward()
+                total_loss.backward()
                 self.optimizer.step()
                 
-                epoch_loss += loss.item()
+                epoch_total_loss += total_loss.item()
             
-            avg_loss = epoch_loss / len(training_data)
-            print(f"Epoch {epoch+1}/{num_epochs}: Loss = {avg_loss:.4f}")
+            # Print epoch statistics
+            avg_total_loss = epoch_total_loss / len(training_data)
+            if use_grammar_loss:
+                avg_ce_loss = epoch_ce_loss / len(training_data)
+                avg_grammar_penalty = epoch_grammar_penalty / len(training_data)
+                print(f"Epoch {epoch+1}/{num_epochs}: "
+                      f"Total Loss = {avg_total_loss:.4f}, "
+                      f"CE Loss = {avg_ce_loss:.4f}, "
+                      f"Grammar Penalty = {avg_grammar_penalty:.4f}")
+            else:
+                print(f"Epoch {epoch+1}/{num_epochs}: Loss = {avg_total_loss:.4f}")
     
     def generate(self, intent: Dict, max_length: int = 200, temperature: float = 0.8, num_candidates: int = 1) -> List[List[str]]:
         """Generate action sequence(s) from intent with grammar enforcement
@@ -688,19 +646,26 @@ class MinimalActionModel:
                 intent_features = self.extract_intent_features(intent).unsqueeze(0)
                 
                 # Start with START token
-                current_tokens = [self.vocab.token_to_id["<START>"]]
+                start_id = self.vocab.encode(["<START>"])[0]
+                current_tokens = [start_id]
                 current_sequence = ["<START>"]
                 
                 for step in range(max_length):
                     # Prepare input
                     input_ids = torch.tensor([current_tokens], dtype=torch.long)
                     
-                    # Forward pass
-                    logits = self.model(intent_features, input_ids)
+                    # Compute grammar state for current sequence
+                    grammar_state = self.encode_grammar_state(current_sequence)
+                    grammar_state_batch = grammar_state.unsqueeze(0)  # Add batch dimension
+                    
+                    # Forward pass with grammar state
+                    logits = self.model(intent_features, input_ids, grammar_state_batch)
                     last_logits = logits[0, -1, :]  # [vocab_size]
                     
-                    # Apply grammar mask to enforce valid next tokens
-                    masked_logits = self.grammar.mask_invalid_tokens(last_logits, current_sequence)
+                    # Apply unified grammar processing: check sequence and mask invalid tokens
+                    masked_logits, valid_tokens, current_state = self.grammar.process_and_mask_for_generation(
+                        current_sequence, last_logits
+                    )
                     
                     # Apply temperature and sample
                     if temperature > 0:
@@ -711,7 +676,7 @@ class MinimalActionModel:
                         # Greedy (deterministic)
                         next_token_id = torch.argmax(masked_logits).item()
                     
-                    next_token = self.vocab.id_to_token[next_token_id]
+                    next_token = self.vocab.decode([next_token_id])[0]
                     
                     # Check for end token
                     if next_token == "<END>":
@@ -724,14 +689,20 @@ class MinimalActionModel:
                 # Decode tokens (remove START)
                 tokens = current_sequence[1:]  # Remove START token
                 
-                # Apply final grammar repair if needed
-                full_sequence = ["<START>"] + tokens + ["<END>"]
-                if not self.grammar.is_sequence_complete(full_sequence):
-                    repaired = self.grammar.repair_sequence(full_sequence)
-                    tokens = repaired[1:-1]  # Remove START and END
+                # Apply final grammar repair and validation using unified method
+                full_sequence_with_end = ["<START>"] + tokens + ["<END>"]
+                final_token_ids, is_complete, repair_message = self.grammar.process_sequence_for_training(
+                    full_sequence_with_end, repair_if_invalid=True
+                )
                 
-                # Remove special tokens
-                tokens = [t for t in tokens if t not in ["<END>", "<PAD>", "<UNK>"]]
+                # Extract tokens (remove START and END)
+                if is_complete:
+                    final_tokens = self.vocab.decode(final_token_ids[1:-1])
+                    tokens = [t for t in final_tokens if t not in ["<END>", "<PAD>", "<UNK>"]]
+                else:
+                    # Use repaired tokens if available
+                    repaired_tokens = self.vocab.decode(final_token_ids)
+                    tokens = [t for t in repaired_tokens[1:-1] if t not in ["<END>", "<PAD>", "<UNK>"]]
                 candidates.append(tokens)
         
         return candidates
@@ -805,16 +776,19 @@ def demo_minimal_model():
     config = MinimalConfig()
     model = MinimalActionModel(config)
     
-    print("Training minimal action-token model with realistic data...")
-    model.train(num_examples=500, num_epochs=20)  # Use realistic data
+    print("Training minimal action-token model with external data...")
+    model.train(data_file="data/dev_data.json", num_epochs=20)
     
-    # Test generation
+    # Test generation with new intent format
     test_intent = {
-        "from_kv": 220,
-        "to_kv": 66,
-        "rating_mva": 100,
-        "scheme_hv": "double_busbar",
-        "lv_feeders": 3
+        "kv_in": ["230kv"],
+        "kv_out": ["13.8kv", "13.8kv", "13.8kv"],
+        "num_transformers": "1",
+        "rated_MVA": "150mva", 
+        "percentZ": "8percentZ",
+        "hv_interrupting_kA": "31.5kA",
+        "feeder_thermal_A": "1200A",
+        "reliability_target": "N_1"
     }
     
     print("\nGenerating sequence for intent:")
