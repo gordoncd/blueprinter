@@ -32,14 +32,14 @@ def test_generation_after_overfitting():
     model = MinimalActionModel(config)
     
     print("Training on clean examples...")
-    model.train(data_file="data/clean_dev_data.json", num_epochs=300)  # Heavy overfitting
+    model.train(data_file="data/training_corpus.json", num_epochs=3)  # Heavy overfitting
     
     print("\n" + "="*60)
     print("TESTING GENERATION ON TRAINING EXAMPLES")
     print("="*60)
     
     # Load the clean training examples
-    with open('data/clean_dev_data.json', 'r') as f:
+    with open('data/training_corpus.json', 'r') as f:
         clean_data = json.load(f)
     
     # Test generation on each training example
